@@ -389,6 +389,23 @@ export function createRenderer(canvas) {
     if (kitchen.state.combo > 1) text(`COMBO x${kitchen.state.combo}`, 1256, 29, 15, '#ffd76a', 'right');
   }
 
+  // Smoke alarm: when BOTH burners hold burnt food the kitchen is in
+  // trouble — a pulsing red banner + edge glow makes the hazard impossible
+  // to miss until the chef clears a burner. Render-only; the simulation
+  // does not change.
+  function drawSmokeAlarm(kitchen) {
+    const burning = kitchen.state.burners.filter((b) => b.item && b.item.state === 'burnt').length;
+    if (burning < 2 || kitchen.state.over) return;
+    const pulse = 0.55 + Math.sin(kitchen.state.elapsed * 10) * 0.45;
+    ctx.strokeStyle = `rgba(229,72,77,${0.35 + pulse * 0.5})`;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(5, 5, FIELD.width - 10, FIELD.height - 10);
+    ctx.fillStyle = 'rgba(120,16,20,0.92)';
+    roundRect(ctx, 430, 64, 420, 36, 18);
+    ctx.fill();
+    text('🔥 SMOKE ALARM — clear the burners! 🔥', 640, 82, 16, '#ffe1e0', 'center');
+  }
+
   function drawFloaters(kitchen) {
     for (const f of kitchen.state.floaters) {
       ctx.globalAlpha = Math.max(0, 1 - f.t / f.life);
@@ -441,6 +458,7 @@ export function createRenderer(canvas) {
       ctx.fill();
       text('★ RUSH HOUR — tickets in fast! ★', 640, 314, 16, '#ffd76a', 'center');
     }
+    drawSmokeAlarm(kitchen);
   }
 
   function overlay(title, lines, foot) {
